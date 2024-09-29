@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stylish Stopwatch</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+body {
+    /* background: linear-gradient(135deg, #232526, #414345); */
+    background-color: #020202;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Arial', sans-serif;
+    position: relative;
+    overflow: hidden;
+}
+.background-video {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    z-index: -1; /* Send the video to the back */
+    transform: translate(-50%, -50%);
+    opacity: 0.7; /* Optional: to slightly fade the video */
+}
+
+.container {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.time-display {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+label {
+    font-size: 4rem;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(0, 255, 255, 0.7);
+    letter-spacing: 2px;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+/* Pulsing effect for the time display */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.buttons {
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    margin: 10px;
+    cursor: pointer;
+    border: none;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    color: white;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.start-btn {
+    background: linear-gradient(90deg, #ff5f6d, #ffc371);
+}
+
+.lap-btn {
+    background: linear-gradient(90deg, #45a247, #283c86);
+}
+
+/* Hover effects */
+.btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Start/Stop button changes */
+.stop {
+    background: linear-gradient(90deg, #dc3545, #ff6e40) !important;
+}
+
+/* Lap list style */
+ul {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 30px;
+}
+
+ul li {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+ul li:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+}
+
+/* Additional styling for milliseconds */
+.milliseconds {
+    font-size: 1.2rem;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+
+    </style>
+</head>
+<body>
+    <video autoplay muted loop class="background-video">
+        <source src="232205_big.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <div  class="container">
+        <div class="time-display">
+            <label id="time-display">00:00:00</label>
+            <span id="milliseconds-display" class="milliseconds">.00</span>
+        </div>
+        <div class="buttons">
+            <button id="start-stop" class="btn start-btn">Start</button>
+            <button id="lap-reset" class="btn lap-btn">Lap</button>
+        </div>
+        <ul id="laps-list"></ul>
+    </div>
+    <script>
+       let timer;
+let running = false;
+let elapsedTime = 0;
+let startTime;
+
+function startStopwatch() {
+    startTime = Date.now() - elapsedTime;
+    timer = setInterval(updateTime, 10); // Update every 10 milliseconds
+}
+
+function stopStopwatch() {
+    clearInterval(timer);
+}
+
+function updateTime() {
+    elapsedTime = Date.now() - startTime;
+    let totalMilliseconds = elapsedTime;
+    let totalSeconds = Math.floor(totalMilliseconds / 1000);
+    let hours = Math.floor(totalSeconds / 3600);
+    let minutes = Math.floor((totalSeconds % 3600) / 60);
+    let seconds = totalSeconds % 60;
+    let milliseconds = Math.floor((totalMilliseconds % 1000) / 10); // Get the milliseconds
+
+    document.getElementById('time-display').textContent = 
+        `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+    document.getElementById('milliseconds-display').textContent = 
+        `.${pad(milliseconds)}`; // Display milliseconds
+}
+
+function pad(number) {
+    return number.toString().padStart(2, '0');
+}
+
+document.getElementById('start-stop').addEventListener('click', function() {
+    if (running) {
+        stopStopwatch();
+        this.textContent = 'Start';
+        this.classList.remove('stop');
+        document.getElementById('lap-reset').textContent = 'Reset';
+        running = false;
+    } else {
+        startStopwatch();
+        this.textContent = 'Stop';
+        this.classList.add('stop');
+        document.getElementById('lap-reset').textContent = 'Lap';
+        running = true;
+    }
+});
+
+document.getElementById('lap-reset').addEventListener('click', function() {
+    if (running) {
+        let lapTime = document.getElementById('time-display').textContent + 
+                      document.getElementById('milliseconds-display').textContent;
+        let lapItem = document.createElement('li');
+        lapItem.textContent = lapTime;
+        document.getElementById('laps-list').prepend(lapItem);
+    } else {
+        resetStopwatch();
+    }
+});
+
+function resetStopwatch() {
+    stopStopwatch();
+    elapsedTime = 0;
+    document.getElementById('time-display').textContent = '00:00:00';
+    document.getElementById('milliseconds-display').textContent = '.00';
+    document.getElementById('laps-list').innerHTML = '';
+    document.getElementById('lap-reset').textContent = 'Lap';
+}
+
+    </script>
+</body>
+</html>
